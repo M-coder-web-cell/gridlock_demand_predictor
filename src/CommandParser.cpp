@@ -6,6 +6,7 @@
 #include "CommandParser.h"
 #include "NexusManager.h"
 #include "GridFormatter.h"
+#include "QueryEngine.h"
 #include "ANSIColors.h"
 #include <iostream>
 #include <sstream>
@@ -90,7 +91,7 @@ bool CommandParser::execute(const std::string& input) {
         if (cmd == "DESCRIBE" || cmd == "DESC") { cmdDescribe(); return true; }
 
         if (cmd == "INSERT") { cmdInsertInto(tokens); return true; }
-        if (cmd == "SELECT") { cmdSelect(tokens); return true; }
+        if (cmd == "SELECT") { cmdSelect(tokens, trimmed); return true; }
         if (cmd == "UPDATE") { cmdUpdate(tokens, trimmed); return true; }
         if (cmd == "DELETE") { cmdDelete(tokens, trimmed); return true; }
 
@@ -308,47 +309,34 @@ void CommandParser::cmdInsertInto(const std::vector<std::string>& /*tokens*/) {
 }
 
 /**
- * SELECT * FROM <table> [WHERE pk_col = value]
+ * SELECT * FROM <table> [WHERE col OP value [AND|OR col OP value ...]]
+ * Supports operators: =, !=, >, <, >=, <=
+ * Supports logical: AND, OR (AND has higher precedence)
  */
-void CommandParser::cmdSelect(const std::vector<std::string>& tokens) {
+void CommandParser::cmdSelect(const std::vector<std::string>& /*tokens*/,
+                              const std::string& rawInput) {
     Table* tbl = NexusManager::getInstance().getCurrentTable();
     if (!tbl) { printError("No table selected."); return; }
 
     std::cout << "\n";
 
-    // Check for WHERE clause
-    // Tokens: SELECT * FROM table WHERE col = val
-    int whereIdx = -1;
-    for (size_t i = 0; i < tokens.size(); ++i) {
-        if (toUpper(tokens[i]) == "WHERE") { whereIdx = static_cast<int>(i); break; }
-    }
+    // Check for WHERE clause in raw input
+    std::string upper = toUpper(rawInput);
+    size_t wherePos = upper.find(" WHERE ");
 
-    if (whereIdx >= 0 && whereIdx + 3 <= static_cast<int>(tokens.size())) {
-        // Parse: WHERE col = value
-        std::string col = tokens[static_cast<size_t>(whereIdx) + 1];
-        // tokens[whereIdx+2] should be '='
-        std::string val = tokens[static_cast<size_t>(whereIdx) + 3];
+    if (wherePos != std::string::npos) {
+        // Extract everything after WHERE
+        std::string whereStr = rawInput.substr(wherePos + 7);
+        WhereClause clause = QueryEngine::parseWhere(whereStr);
 
-        // Remove quotes if present
-        if (val.size() >= 2 &&
-            ((val.front() == '\'' && val.back() == '\'') ||
-             (val.front() == '"'  && val.back() == '"'))) {
-            val = val.substr(1, val.size() - 2);
+        if (!clause.valid) {
+            printError("WHERE parse error: " + clause.error);
+            return;
         }
 
-        const Column* pk = tbl->getPrimaryKey();
-        if (pk && pk->name == col) {
-            auto rows = tbl->selectWhere(val);
-            GridFormatter::render(tbl->getColumns(), rows);
-        } else {
-            // Generic filter on any column
-            auto allRows = tbl->selectAll();
-            std::vector<Row> filtered;
-            for (const auto& r : allRows) {
-                if (r.get(col) == val) filtered.push_back(r);
-            }
-            GridFormatter::render(tbl->getColumns(), filtered);
-        }
+        auto allRows = tbl->selectAll();
+        auto filtered = QueryEngine::filter(allRows, tbl->getColumns(), clause);
+        GridFormatter::render(tbl->getColumns(), filtered);
     } else {
         // SELECT all
         auto rows = tbl->selectAll();
@@ -502,7 +490,9 @@ void CommandParser::cmdHelpTable() {
     };
     row("INSERT INTO " + tName,                      "Step-by-step insert wizard");
     row("SELECT * FROM " + tName,                    "Show all rows");
-    row("SELECT * FROM " + tName + " WHERE c = v",   "Filter by column");
+    row("SELECT ... WHERE col = val",                 "Filter with = operator");
+    row("SELECT ... WHERE col > val",                 "Operators: = != > < >= <=");
+    row("SELECT ... WHERE a > 1 AND b = x",           "Combine with AND / OR");
     row("UPDATE " + tName + " SET c=v WHERE pk=v",   "Update row by PK");
     row("DELETE FROM " + tName + " WHERE pk=v",      "Delete row by PK");
     row("DESCRIBE",                                   "Show table schema");

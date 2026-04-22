@@ -44,7 +44,8 @@ private:
 
     // ── Table-context commands ───────────────────────────────────
     static void cmdInsertInto(const std::vector<std::string>& tokens);
-    static void cmdSelect(const std::vector<std::string>& tokens);
+    static void cmdSelect(const std::vector<std::string>& tokens,
+                          const std::string& rawInput);
     static void cmdUpdate(const std::vector<std::string>& tokens,
                           const std::string& rawInput);
     static void cmdDelete(const std::vector<std::string>& tokens,
