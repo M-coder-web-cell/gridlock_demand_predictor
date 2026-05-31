@@ -2,7 +2,8 @@ import os
 import pygeohash as pgh
 import pandas as pd
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(SCRIPT_DIR)
 DATA_PATH = os.path.join(BASE_DIR, 'dataset', 'train.csv')
 
 def load_data(data_file_path : str):
@@ -48,9 +49,10 @@ def main():
   df_final = save_lat_lon(df_encoded)
 
   WRITE_FILE = os.path.join(BASE_DIR, 'dataset', 'transformed_train.csv')
-  df_final.to_csv(WRITE_FILE , index=False)
+  #df_final.to_csv(WRITE_FILE , index=False)
 
-  print(df_encoded.count())
+  print(df_final.info())
+  
 
 if __name__ == "__main__":
   main()
