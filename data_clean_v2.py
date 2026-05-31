@@ -15,10 +15,10 @@ def remove_na(df : pd.DataFrame) -> pd.DataFrame:
 
 def onehotencode_columns(df_cleaned: pd.DataFrame) -> pd.DataFrame:
 
-  df_encoded = pd.get_dummies(df_cleaned, columns=['Weather'], prefix='Weather')
+  df_encoded = pd.get_dummies(df_cleaned, columns=['Weather'], prefix='Weather', dtype = int)
   df_encoded.dropna(subset=['Temperature'], inplace=True)
 
-  df_encoded = pd.get_dummies(df_encoded, columns=['RoadType'], prefix='Road')
+  df_encoded = pd.get_dummies(df_encoded, columns=['RoadType'], prefix='Road', dtype = int)
   df_encoded['LargeVehicles'] = df_encoded['LargeVehicles'].map({'Allowed' : 1, 'Not Allowed' : 0})
   df_encoded['Landmarks'] = df_encoded['Landmarks'].map({'Yes' : 1, 'No' : 0})
 
