@@ -49,7 +49,7 @@ def main():
   df_final = save_lat_lon(df_encoded)
 
   WRITE_FILE = os.path.join(BASE_DIR, 'dataset', 'transformed_train.csv')
-  #df_final.to_csv(WRITE_FILE , index=False)
+  df_final.to_csv(WRITE_FILE , index=False)
 
   print(df_final.info())
   
