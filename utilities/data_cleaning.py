@@ -4,7 +4,7 @@ import pandas as pd
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SCRIPT_DIR)
-DATA_PATH = os.path.join(BASE_DIR, 'dataset', 'train.csv')
+DATA_PATH = os.path.join(BASE_DIR, 'dataset', 'test.csv')
 
 def load_data(data_file_path : str):
   df = pd.read_csv(data_file_path)
@@ -48,7 +48,7 @@ def main():
   df_encoded = onehotencode_columns(df_cleaned)
   df_final = save_lat_lon(df_encoded)
 
-  WRITE_FILE = os.path.join(BASE_DIR, 'dataset', 'transformed_train.csv')
+  WRITE_FILE = os.path.join(BASE_DIR, 'dataset', 'transformed_test.csv')
   df_final.to_csv(WRITE_FILE , index=False)
 
   print(df_final.info())
