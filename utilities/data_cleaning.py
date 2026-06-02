@@ -8,11 +8,8 @@ DATA_PATH = os.path.join(BASE_DIR, 'dataset', 'test.csv')
 
 def load_data(data_file_path : str):
   df = pd.read_csv(data_file_path)
+  print(df.count())
   return df
-
-def remove_na(df : pd.DataFrame) -> pd.DataFrame:
-  df_cleaned = df.dropna()
-  return df_cleaned
 
 def onehotencode_columns(df_cleaned: pd.DataFrame) -> pd.DataFrame:
 
@@ -44,8 +41,7 @@ def save_lat_lon(df_encoded : pd.DataFrame) -> pd.DataFrame:
 
 def main():
   df = load_data(DATA_PATH)
-  df_cleaned = remove_na(df)
-  df_encoded = onehotencode_columns(df_cleaned)
+  df_encoded = onehotencode_columns(df)
   df_final = save_lat_lon(df_encoded)
 
   WRITE_FILE = os.path.join(BASE_DIR, 'dataset', 'transformed_test.csv')
